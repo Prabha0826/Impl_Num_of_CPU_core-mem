@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define BUFFER_SIZE 1024
+
+void get_cpu_info() {
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    if (cpuinfo == NULL) {
+        perror("Error opening /proc/cpuinfo");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[BUFFER_SIZE];
+    int core_count = 0;
+
+    while (fgets(buffer, BUFFER_SIZE, cpuinfo)) {
+        if (strncmp(buffer, "processor", 9) == 0) {
+            core_count++;
+        }
+    }
+
+    fclose(cpuinfo);
+    printf("Number of CPU cores: %d\n", core_count);
+}
+
+void get_memory_info() {
+    FILE *meminfo = fopen("/proc/meminfo", "r");
+    if (meminfo == NULL) {
+        perror("Error opening /proc/meminfo");
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[BUFFER_SIZE];
+    long total_memory = 0;
+    long free_memory = 0;
+
+    while (fgets(buffer, BUFFER_SIZE, meminfo)) {
+        if (strncmp(buffer, "MemTotal:", 9) == 0) {
+            sscanf(buffer + 9, "%ld", &total_memory);
+        }
+        if (strncmp(buffer, "MemFree:", 8) == 0) {
+            sscanf(buffer + 8, "%ld", &free_memory);
+        }
+    }
+
+    fclose(meminfo);
+    printf("Total Memory: %ld kB\n", total_memory);
+    printf("Free Memory: %ld kB\n", free_memory);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s [cpu|memory]\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    if (strcmp(argv[1], "cpu") == 0) {
+        get_cpu_info();
+    } else if (strcmp(argv[1], "memory") == 0) {
+        get_memory_info();
+    } else {
+        fprintf(stderr, "Invalid argument: %s\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
